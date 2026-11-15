@@ -1,6 +1,7 @@
-﻿import 'package:material_ui/material_ui.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'screens/about_screen.dart';
 import 'screens/home_screen.dart';
 import 'screens/settings_screen.dart';
 import 'theme/app_theme.dart';
@@ -63,6 +64,13 @@ class _MainAppState extends State<MainApp> {
                     themeMode: _themeMode,
                     onThemeChanged: _changeTheme,
                   ),
+                ),
+              );
+            },
+            onOpenAbout: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (_) => const AboutScreen(),
                 ),
               );
             },

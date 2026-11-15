@@ -4,10 +4,12 @@ import 'package:material_ui/material_ui.dart';
 class HomeScreen extends StatelessWidget {
   const HomeScreen({
     required this.onOpenSettings,
+    required this.onOpenAbout,
     super.key,
   });
 
   final VoidCallback onOpenSettings;
+  final VoidCallback onOpenAbout;
 
   void _showComingSoon(BuildContext context, String feature) {
     ScaffoldMessenger.of(context).showSnackBar(
@@ -73,7 +75,7 @@ class HomeScreen extends StatelessWidget {
                       ),
                       const SizedBox(width: 24),
                       IconButton(
-                        onPressed: () => _showComingSoon(context, 'About'),
+                        onPressed: onOpenAbout,
                         icon: const Icon(Icons.info_outline_rounded),
                         color: Theme.of(context).colorScheme.onSurface,
                         tooltip: 'About',
