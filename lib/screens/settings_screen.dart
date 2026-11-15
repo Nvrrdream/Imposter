@@ -1,4 +1,4 @@
-﻿import 'package:material_ui/material_ui.dart';
+import 'package:material_ui/material_ui.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({
@@ -27,7 +27,7 @@ class SettingsScreen extends StatelessWidget {
                 children: [
                   const Text('App theme', style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700)),
                   const SizedBox(height: 6),
-                  Text('Choose how Imposter looks.', style: Theme.of(context).textTheme.bodyMedium),
+                  Text('Choose how the app looks.', style: Theme.of(context).textTheme.bodyMedium),
                   const SizedBox(height: 18),
                   SegmentedButton<ThemeMode>(
                     segments: const [
