@@ -3,6 +3,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import 'screens/about_screen.dart';
 import 'screens/home_screen.dart';
+import 'screens/player_setup_screen.dart';
 import 'screens/settings_screen.dart';
 import 'theme/app_theme.dart';
 
@@ -57,6 +58,13 @@ class _MainAppState extends State<MainApp> {
       home: Builder(
         builder: (context) {
           return HomeScreen(
+            onPlay: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (_) => const PlayerSetupScreen(),
+                ),
+              );
+            },
             onOpenSettings: () {
               Navigator.of(context).push(
                 MaterialPageRoute(
