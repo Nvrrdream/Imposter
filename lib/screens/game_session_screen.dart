@@ -1,5 +1,6 @@
 import 'package:material_ui/material_ui.dart';
 
+import '../models/game_state.dart';
 import 'discussion_screen.dart';
 import '../data/word_bank.dart';
 import '../models/player_assignment.dart';
@@ -23,6 +24,7 @@ class GameSessionScreen extends StatefulWidget {
 
 class _GameSessionScreenState extends State<GameSessionScreen> {
   late final List<PlayerAssignment> _assignments;
+  late final GameState _gameState;
   int _currentPlayerIndex = 0;
   bool _isRevealed = false;
   bool _hasRevealedCurrentPlayer = false;
@@ -40,6 +42,7 @@ class _GameSessionScreenState extends State<GameSessionScreen> {
         wordEntry: wordEntry,
       ),
     );
+    _gameState = GameState.initial(_assignments);
   }
 
   void _revealRole() {
@@ -74,7 +77,7 @@ class _GameSessionScreenState extends State<GameSessionScreen> {
 
     if (isFinished) {
   return DiscussionScreen(
-    assignments: _assignments,
+    gameState: _gameState,
   );
 }
 

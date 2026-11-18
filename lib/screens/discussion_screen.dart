@@ -1,15 +1,16 @@
+
 import 'package:material_ui/material_ui.dart';
 
-import '../models/player_assignment.dart';
+import '../models/game_state.dart';
 import 'voting_screen.dart';
 
 class DiscussionScreen extends StatelessWidget {
   const DiscussionScreen({
-    required this.assignments,
+    required this.gameState,
     super.key,
   });
 
-  final List<PlayerAssignment> assignments;
+  final GameState gameState;
 
   @override
   Widget build(BuildContext context) {
@@ -43,7 +44,7 @@ class DiscussionScreen extends StatelessWidget {
               ),
               const SizedBox(height: 16),
               Text(
-                'All ${assignments.length} players have received their roles.',
+                '${gameState.activeAssignments.length} players remain.',
                 textAlign: TextAlign.center,
                 style: Theme.of(context).textTheme.bodyLarge,
               ),
@@ -59,7 +60,7 @@ class DiscussionScreen extends StatelessWidget {
                   Navigator.of(context).push(
                     MaterialPageRoute(
                       builder: (_) => VotingScreen(
-                        assignments: assignments,
+                        gameState: gameState,
                       ),
                     ),
                   );

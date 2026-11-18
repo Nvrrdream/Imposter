@@ -118,6 +118,29 @@ void main() {
       );
     });
 
+   test('distributes imposter selection evenly across players', () {
+  final random = Random(2026);
+  final counts = List<int>.filled(players.length, 0);
+
+  for (var game = 0; game < 10000; game++) {
+    final assignments = RoleAssignmentService.assign(
+      players: players,
+      imposterCount: 1,
+      wordEntry: wordEntry,
+      random: random,
+    );
+
+    for (var i = 0; i < assignments.length; i++) {
+      if (assignments[i].isImposter) {
+        counts[i]++;
+      }
+    }
+  }
+
+  for (final count in counts) {
+    expect(count, inInclusiveRange(1800, 2200));
+  }
+});
     test('rejects duplicate player names', () {
       expect(
         () => RoleAssignmentService.assign(
