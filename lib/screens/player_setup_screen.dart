@@ -1,4 +1,3 @@
-
 import 'package:material_ui/material_ui.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -37,15 +36,7 @@ class _PlayerSetupScreenState extends State<PlayerSetupScreen> {
           preferences.getBool('imposters_know_each_other') ?? false;
       _isPreferenceLoaded = true;
     });
-  }
-
-  Future<void> _setImposterPreference(bool value) async {
-    setState(() => _impostersKnowEachOther = value);
-    final preferences = await SharedPreferences.getInstance();
-    await preferences.setBool('imposters_know_each_other', value);
-  }
-
-  @override
+  }@override
 
   void dispose() {
     for (final player in _players) {
@@ -259,19 +250,6 @@ class _PlayerSetupScreenState extends State<PlayerSetupScreen> {
                           ),
                         ],
                       ),
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Card(
-                    child: SwitchListTile(
-                      title: const Text('Imposters know each other'),
-                      subtitle: const Text(
-                        'Show each imposter the names of the others.',
-                      ),
-                      value: _impostersKnowEachOther,
-                      onChanged: _isPreferenceLoaded
-                          ? _setImposterPreference
-                          : null,
                     ),
                   ),
                   const SizedBox(height: 8),
