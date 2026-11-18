@@ -1,5 +1,6 @@
 
 import 'package:material_ui/material_ui.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'game_session_screen.dart';
 
@@ -13,18 +14,39 @@ class PlayerSetupScreen extends StatefulWidget {
 class _PlayerSetupScreenState extends State<PlayerSetupScreen> {
   final List<TextEditingController> _players = [];
   int _imposterCount = 1;
+  bool _impostersKnowEachOther = false;
+  bool _isPreferenceLoaded = false;
 
 
   @override
   void initState() {
     super.initState();
 
+    _loadImposterPreference();
+
     for (var i = 1; i <= 3; i++) {
       _players.add(TextEditingController(text: 'Player $i'));
     }
   }
+  Future<void> _loadImposterPreference() async {
+    final preferences = await SharedPreferences.getInstance();
+    if (!mounted) return;
+
+    setState(() {
+      _impostersKnowEachOther =
+          preferences.getBool('imposters_know_each_other') ?? false;
+      _isPreferenceLoaded = true;
+    });
+  }
+
+  Future<void> _setImposterPreference(bool value) async {
+    setState(() => _impostersKnowEachOther = value);
+    final preferences = await SharedPreferences.getInstance();
+    await preferences.setBool('imposters_know_each_other', value);
+  }
 
   @override
+
   void dispose() {
     for (final player in _players) {
       player.dispose();
@@ -88,6 +110,7 @@ class _PlayerSetupScreenState extends State<PlayerSetupScreen> {
         builder: (_) => GameSessionScreen(
           players: List<String>.unmodifiable(names),
           imposterCount: _imposterCount,
+          impostersKnowEachOther: _impostersKnowEachOther,
         ),
       ),
     );
@@ -239,6 +262,19 @@ class _PlayerSetupScreenState extends State<PlayerSetupScreen> {
                     ),
                   ),
                   const SizedBox(height: 8),
+                  Card(
+                    child: SwitchListTile(
+                      title: const Text('Imposters know each other'),
+                      subtitle: const Text(
+                        'Show each imposter the names of the others.',
+                      ),
+                      value: _impostersKnowEachOther,
+                      onChanged: _isPreferenceLoaded
+                          ? _setImposterPreference
+                          : null,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
                   Text(
                     'At least one player must remain a normal player.',
                     style: Theme.of(context).textTheme.bodySmall,
@@ -251,7 +287,7 @@ class _PlayerSetupScreenState extends State<PlayerSetupScreen> {
               child: SizedBox(
                 width: double.infinity,
                 child: FilledButton(
-                  onPressed: _continue,
+                  onPressed: _isPreferenceLoaded ? _continue : null,
                   child: const Padding(
                     padding: EdgeInsets.symmetric(vertical: 14),
                     child: Text('Continue'),

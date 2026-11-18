@@ -8,11 +8,13 @@ class GameSessionScreen extends StatefulWidget {
   const GameSessionScreen({
     required this.players,
     required this.imposterCount,
+    required this.impostersKnowEachOther,
     super.key,
   });
 
   final List<String> players;
   final int imposterCount;
+  final bool impostersKnowEachOther;
 
   @override
   State<GameSessionScreen> createState() => _GameSessionScreenState();
@@ -21,8 +23,8 @@ class GameSessionScreen extends StatefulWidget {
 class _GameSessionScreenState extends State<GameSessionScreen> {
   late final List<PlayerAssignment> _assignments;
   int _currentPlayerIndex = 0;
-  bool _isReady = false;
   bool _isRevealed = false;
+  bool _hasRevealedCurrentPlayer = false;
 
   @override
   void initState() {
@@ -39,23 +41,27 @@ class _GameSessionScreenState extends State<GameSessionScreen> {
     );
   }
 
-  void _startReveal() {
+  void _revealRole() {
+    if (_isRevealed) return;
+
     setState(() {
-      _isReady = true;
-      _isRevealed = false;
+      _isRevealed = true;
+      _hasRevealedCurrentPlayer = true;
     });
   }
 
-  void _revealRole() {
+  void _concealRole() {
+    if (!_isRevealed) return;
+
     setState(() {
-      _isRevealed = true;
+      _isRevealed = false;
     });
   }
 
   void _finishTurn() {
     setState(() {
       _isRevealed = false;
-      _isReady = false;
+      _hasRevealedCurrentPlayer = false;
       _currentPlayerIndex++;
     });
   }
@@ -115,6 +121,15 @@ class _GameSessionScreenState extends State<GameSessionScreen> {
 
     final assignment = _assignments[_currentPlayerIndex];
 
+    final fellowImposterNames =
+      widget.impostersKnowEachOther && assignment.isImposter
+          ? _assignments
+              .where((player) =>
+                  player.isImposter && player.playerName != assignment.playerName)
+              .map((player) => player.playerName)
+              .toList(growable: false)
+          : const <String>[];
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Private Role'),
@@ -135,119 +150,149 @@ class _GameSessionScreenState extends State<GameSessionScreen> {
                       fontWeight: FontWeight.bold,
                     ),
               ),
-              const SizedBox(height: 32),
+              const SizedBox(height: 24),
               Expanded(
                 child: Center(
-                  child: Card(
-                    child: SizedBox(
-                      width: double.infinity,
-                      child: Padding(
-                        padding: const EdgeInsets.all(24),
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            if (!_isReady) ...[
-                              const Icon(
-                                Icons.phone_android_rounded,
-                                size: 56,
-                              ),
-                              const SizedBox(height: 24),
-                              Text(
-                                'PASS THE PHONE TO',
-                                textAlign: TextAlign.center,
-                                style: Theme.of(context)
-                                    .textTheme
-                                    .labelLarge
-                                    ?.copyWith(
-                                      color: colors.secondary,
-                                      letterSpacing: 1.2,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                              ),
-                              const SizedBox(height: 12),
-                              Text(
-                                assignment.playerName,
-                                textAlign: TextAlign.center,
-                                style: Theme.of(context)
-                                    .textTheme
-                                    .headlineMedium
-                                    ?.copyWith(fontWeight: FontWeight.bold),
-                              ),
-                              const SizedBox(height: 16),
-                              const Text(
-                                'Make sure nobody else can see the screen.',
-                                textAlign: TextAlign.center,
-                              ),
-                            ] else if (!_isRevealed) ...[
-                              const Icon(
-                                Icons.visibility_off_rounded,
-                                size: 56,
-                              ),
-                              const SizedBox(height: 24),
-                              Text(
-                                assignment.playerName,
-                                textAlign: TextAlign.center,
-                                style: Theme.of(context)
-                                    .textTheme
-                                    .headlineSmall
-                                    ?.copyWith(fontWeight: FontWeight.bold),
-                              ),
-                              const SizedBox(height: 16),
-                              const Text(
-                                'Your role is hidden. Tap below when you are ready to view it.',
-                                textAlign: TextAlign.center,
-                              ),
-                            ] else ...[
-                              Icon(
-                                assignment.isImposter
-                                    ? Icons.visibility_rounded
-                                    : Icons.check_circle_rounded,
-                                size: 56,
-                                color: colors.primary,
-                              ),
-                              const SizedBox(height: 24),
-                              Text(
-                                assignment.isImposter
-                                    ? 'YOU ARE AN IMPOSTER'
-                                    : 'YOUR SECRET WORD',
-                                textAlign: TextAlign.center,
-                                style: Theme.of(context)
-                                    .textTheme
-                                    .titleLarge
-                                    ?.copyWith(
-                                      fontWeight: FontWeight.bold,
-                                      letterSpacing: 1.1,
-                                    ),
-                              ),
-                              const SizedBox(height: 24),
-                              Text(
-                                assignment.isImposter
-                                    ? assignment.category!
-                                    : assignment.secretWord!,
-                                textAlign: TextAlign.center,
-                                style: Theme.of(context)
-                                    .textTheme
-                                    .headlineMedium
-                                    ?.copyWith(
-                                      color: colors.primary,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                              ),
-                              if (assignment.isImposter) ...[
-                                const SizedBox(height: 16),
-                                Text(
-                                  'Hint: ${assignment.hint!}',
-                                  textAlign: TextAlign.center,
-                                  style: Theme.of(context).textTheme.bodyLarge,
-                                ),
-                              ],
-                              const SizedBox(height: 24),
-                              const Text(
-                                'Remember your information. Do not show it to anyone.',
-                                textAlign: TextAlign.center,
-                              ),
-                            ],
-                          ],
+                  child: SizedBox(
+                    width: double.infinity,
+                    child: GestureDetector(
+                      behavior: HitTestBehavior.opaque,
+                      onTapDown: (_) => _revealRole(),
+                      onTapUp: (_) => _concealRole(),
+                      onTapCancel: _concealRole,
+                      child: AnimatedSlide(
+                        offset: _isRevealed
+                            ? const Offset(0, -0.025)
+                            : Offset.zero,
+                        duration: const Duration(milliseconds: 180),
+                        curve: Curves.easeOut,
+                        child: AnimatedScale(
+                          scale: _isRevealed ? 1.015 : 1,
+                          duration: const Duration(milliseconds: 180),
+                          curve: Curves.easeOut,
+
+child: Card(
+  child: ConstrainedBox(
+    constraints: const BoxConstraints(
+      minHeight: 300,
+    ),
+    child: Padding(
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        children: [
+          Expanded(
+            child: Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (!_isRevealed) ...[
+                    const Icon(
+                      Icons.lock_rounded,
+                      size: 56,
+                    ),
+                    const SizedBox(height: 24),
+                    Text(
+                      assignment.playerName,
+                      textAlign: TextAlign.center,
+                      style: Theme.of(context)
+                          .textTheme
+                          .headlineMedium
+                          ?.copyWith(
+                            fontSize: 30,
+                            color: colors.primary,
+                            fontWeight: FontWeight.bold,
+                          ),
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      'Press and hold to reveal your role',
+                      textAlign: TextAlign.center,
+                      style: Theme.of(context).textTheme.bodyLarge,
+                    ),
+                  ] else ...[
+                    Icon(
+                      assignment.isImposter
+                          ? Icons.visibility_rounded
+                          : Icons.check_circle_rounded,
+                      size: 56,
+                      color: colors.primary,
+                    ),
+                    const SizedBox(height: 24),
+                    Text(
+                      assignment.isImposter
+                          ? 'YOU ARE AN IMPOSTER'
+                          : 'YOUR SECRET WORD',
+                      textAlign: TextAlign.center,
+                      style: Theme.of(context)
+                          .textTheme
+                          .titleLarge
+                          ?.copyWith(
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: 1.1,
+                          ),
+                    ),
+                    const SizedBox(height: 24),
+                    Text(
+                      assignment.isImposter
+                          ? assignment.category!
+                          : assignment.secretWord!,
+                      textAlign: TextAlign.center,
+                      style: Theme.of(context)
+                          .textTheme
+                          .headlineMedium
+                          ?.copyWith(
+                            color: colors.primary,
+                            fontWeight: FontWeight.bold,
+                          ),
+                    ),
+                    if (assignment.isImposter) ...[
+                      const SizedBox(height: 16),
+                      Text(
+                        'Hint: ${assignment.hint!}',
+                        textAlign: TextAlign.center,
+                        style: Theme.of(context).textTheme.bodyLarge,
+                      ),
+                    ],
+                    const SizedBox(height: 24),
+                    if (fellowImposterNames.isNotEmpty) ...[
+                      const SizedBox(height: 16),
+                      Text(
+                        'YOUR PARTNERS',
+                        textAlign: TextAlign.center,
+                        style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                          color: colors.onSurfaceVariant,
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: 1.2,
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        fellowImposterNames.join(', '),
+                        textAlign: TextAlign.center,
+                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                          color: colors.primary,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ],
+                ],
+              ),
+            ),
+          ),
+          if (_isRevealed) ...[
+            const SizedBox(height: 16),
+            const Text(
+              'Release to hide your word',
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ],
+      ),
+    ),
+  ),
+),
                         ),
                       ),
                     ),
@@ -255,23 +300,16 @@ class _GameSessionScreenState extends State<GameSessionScreen> {
                 ),
               ),
               const SizedBox(height: 24),
-              SizedBox(
-                width: double.infinity,
-                child: FilledButton(
-                  onPressed: !_isReady
-                      ? _startReveal
-                      : !_isRevealed
-                          ? _revealRole
-                          : _finishTurn,
-                  child: Text(
-                    !_isReady
-                        ? "I'm ready"
-                        : !_isRevealed
-                            ? 'Reveal my role'
-                            : 'Got it',
+              if (_hasRevealedCurrentPlayer)
+                SizedBox(
+                  width: double.infinity,
+                  child: FilledButton(
+                    onPressed: _finishTurn,
+                    child: const Text('Got it'),
                   ),
-                ),
-              ),
+                )
+              else
+                const SizedBox(height: 48),
             ],
           ),
         ),
