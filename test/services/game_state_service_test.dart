@@ -87,33 +87,43 @@ void main() {
       expect(state.status, GameStatus.impostersWon);
       expect(state.wrongVotes, 2);
     });
+    
+      test('catching an imposter does not reduce the wrong-vote allowance', () {
+  final state = GameState.initial([
+    player('Alex', imposter: true),
+    player('Chris', imposter: true),
+    player('Sam'),
+    player('Jordan'),
+    player('Taylor'),
+    player('Morgan'),
+  ]);
 
-    test('threshold adjusts after an imposter is caught', () {
-      final assignments = [
-        player('Alex', imposter: true),
-        player('Chris', imposter: true),
-        player('Sam'),
-        player('Jordan'),
-      ];
+  final firstVote = GameStateService.processVote(
+    state: state,
+    votedPlayerName: 'Alex',
+  );
 
-      var state = GameState.initial(assignments);
+  expect(firstVote.state.remainingImposters, 1);
+  expect(firstVote.state.wrongVotes, 0);
+  expect(firstVote.state.status, GameStatus.playing);
 
-      state = GameStateService.processVote(
-        state: state,
-        votedPlayerName: 'Alex',
-      ).state;
+  final secondVote = GameStateService.processVote(
+    state: firstVote.state,
+    votedPlayerName: 'Sam',
+  );
 
-      expect(state.status, GameStatus.playing);
-      expect(state.remainingImposters, 1);
+  expect(secondVote.state.wrongVotes, 1);
+  expect(secondVote.state.status, GameStatus.playing);
 
-      state = GameStateService.processVote(
-        state: state,
-        votedPlayerName: 'Sam',
-      ).state;
+  final thirdVote = GameStateService.processVote(
+    state: secondVote.state,
+    votedPlayerName: 'Jordan',
+  );
 
-      expect(state.status, GameStatus.impostersWon);
-      expect(state.wrongVotes, 1);
-    });
+  expect(thirdVote.state.wrongVotes, 2);
+  expect(thirdVote.state.remainingImposters, 1);
+  expect(thirdVote.state.status, GameStatus.impostersWon);
+});
 
     test('innocent team wins when all imposters are caught', () {
       final assignments = [

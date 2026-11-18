@@ -1,6 +1,6 @@
-
 import 'package:material_ui/material_ui.dart';
 
+import 'game_results_screen.dart';
 import '../services/game_state_service.dart';
 import 'discussion_screen.dart';
 
@@ -76,8 +76,12 @@ class VoteRevealScreen extends StatelessWidget {
               FilledButton(
                 onPressed: () {
                   if (isGameFinished) {
-                    Navigator.of(context).popUntil(
-                      (route) => route.isFirst,
+                    Navigator.of(context).pushReplacement(
+                      MaterialPageRoute(
+                        builder: (_) => GameResultsScreen(
+                          gameState: state,
+                        ),
+                      ),
                     );
                   } else {
                     Navigator.of(context).pushAndRemoveUntil(
