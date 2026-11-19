@@ -63,6 +63,9 @@ class GameStateService {
       wrongVotes: wrongVotes,
       roundsCompleted: state.roundsCompleted + 1,
       status: status,
+      difficulty: state.difficulty,
+      newWordEveryRound: state.newWordEveryRound,
+      impostersKnowEachOther: state.impostersKnowEachOther,
     );
 
     return VoteResult(

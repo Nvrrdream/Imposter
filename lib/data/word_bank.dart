@@ -94,6 +94,7 @@ class WordBank {
   static WordEntry pickRandom({
     required WordDifficulty difficulty,
     Random? random,
+    String? excludeWord,
   }) {
     final availableEntries = entriesFor(difficulty);
 
@@ -101,7 +102,21 @@ class WordBank {
       throw StateError('No words available for this difficulty.');
     }
 
+    var candidates = availableEntries;
+
+    if (excludeWord != null) {
+      final alternatives = availableEntries
+          .where(
+            (entry) => entry.word.toLowerCase() != excludeWord.toLowerCase(),
+          )
+          .toList();
+
+      if (alternatives.isNotEmpty) {
+        candidates = alternatives;
+      }
+    }
+
     final source = random ?? Random();
-    return availableEntries[source.nextInt(availableEntries.length)];
+    return candidates[source.nextInt(candidates.length)];
   }
 }

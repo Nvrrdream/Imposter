@@ -16,25 +16,39 @@ class SettingsScreen extends StatefulWidget {
 }
 
 class _SettingsScreenState extends State<SettingsScreen> {
+  bool _multiImposterMode = false;
   bool _impostersKnowEachOther = false;
+  bool _newWordEveryRound = false;
   bool _isPreferenceLoaded = false;
 
   @override
   void initState() {
     super.initState();
-    _loadImposterPreference();
+    _loadPreferences();
   }
 
-  Future<void> _loadImposterPreference() async {
+  Future<void> _loadPreferences() async {
     final preferences = await SharedPreferences.getInstance();
 
     if (!mounted) return;
 
     setState(() {
+      _multiImposterMode = preferences.getBool('multi_imposter_mode') ?? false;
       _impostersKnowEachOther =
           preferences.getBool('imposters_know_each_other') ?? false;
+      _newWordEveryRound =
+          preferences.getBool('new_word_every_round') ?? false;
       _isPreferenceLoaded = true;
     });
+  }
+
+  Future<void> _setMultiImposterMode(bool value) async {
+    setState(() {
+      _multiImposterMode = value;
+    });
+
+    final preferences = await SharedPreferences.getInstance();
+    await preferences.setBool('multi_imposter_mode', value);
   }
 
   Future<void> _setImposterPreference(bool value) async {
@@ -44,6 +58,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
     final preferences = await SharedPreferences.getInstance();
     await preferences.setBool('imposters_know_each_other', value);
+  }
+
+  Future<void> _setNewWordEveryRound(bool value) async {
+    setState(() {
+      _newWordEveryRound = value;
+    });
+
+    final preferences = await SharedPreferences.getInstance();
+    await preferences.setBool('new_word_every_round', value);
   }
 
   @override
@@ -96,14 +119,41 @@ class _SettingsScreenState extends State<SettingsScreen> {
           Text('GAME', style: Theme.of(context).textTheme.labelLarge),
           const SizedBox(height: 12),
           Card(
+            child: Column(
+              children: [
+                SwitchListTile(
+                  title: const Text('Multi-imposter mode'),
+                  subtitle: const Text('Allow more than one imposter in a game.'),
+                  value: _multiImposterMode,
+                  onChanged: _isPreferenceLoaded ? _setMultiImposterMode : null,
+                ),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+                  child: Card(
+                    child: SwitchListTile(
+                      title: const Text('New Word Every Round'),
+                      subtitle: const Text(
+                        'Give surviving players a new word after each vote.',
+                      ),
+                      value: _newWordEveryRound,
+                      onChanged: _isPreferenceLoaded && _multiImposterMode
+                          ? _setNewWordEveryRound
+                          : null,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 10),
+          Card(
             child: SwitchListTile(
               title: const Text('Imposters know each other'),
               subtitle: const Text(
                 'Show each imposter the names of the others.',
               ),
               value: _impostersKnowEachOther,
-              onChanged:
-                  _isPreferenceLoaded ? _setImposterPreference : null,
+              onChanged: _isPreferenceLoaded ? _setImposterPreference : null,
             ),
           ),
         ],

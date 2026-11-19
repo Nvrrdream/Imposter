@@ -3,7 +3,7 @@ import 'package:material_ui/material_ui.dart';
 import 'game_results_screen.dart';
 import '../services/game_state_service.dart';
 import 'discussion_screen.dart';
-
+import 'new_word_reveal_screen.dart';
 class VoteRevealScreen extends StatelessWidget {
   const VoteRevealScreen({
     required this.voteResult,
@@ -84,11 +84,13 @@ class VoteRevealScreen extends StatelessWidget {
                       ),
                     );
                   } else {
+                    final Widget nextScreen = state.newWordEveryRound
+                        ? NewWordRevealScreen(gameState: state)
+                        : DiscussionScreen(gameState: state);
+
                     Navigator.of(context).pushAndRemoveUntil(
                       MaterialPageRoute(
-                        builder: (_) => DiscussionScreen(
-                          gameState: state,
-                        ),
+                        builder: (_) => nextScreen,
                       ),
                       (route) => route.isFirst,
                     );

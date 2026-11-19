@@ -1,3 +1,4 @@
+import '../models/word_entry.dart';
 import 'package:material_ui/material_ui.dart';
 
 import '../models/game_state.dart';
@@ -11,12 +12,16 @@ class GameSessionScreen extends StatefulWidget {
     required this.players,
     required this.imposterCount,
     required this.impostersKnowEachOther,
+    required this.newWordEveryRound,
+    required this.difficulty,
     super.key,
   });
 
   final List<String> players;
   final int imposterCount;
   final bool impostersKnowEachOther;
+  final bool newWordEveryRound;
+  final WordDifficulty difficulty;
 
   @override
   State<GameSessionScreen> createState() => _GameSessionScreenState();
@@ -32,9 +37,7 @@ class _GameSessionScreenState extends State<GameSessionScreen> {
   @override
   void initState() {
     super.initState();
-
-    final wordEntry = WordBank.pickRandom();
-
+    final wordEntry = WordBank.pickRandom(difficulty: widget.difficulty);
     _assignments = List.unmodifiable(
       RoleAssignmentService.assign(
         players: widget.players,
@@ -42,7 +45,12 @@ class _GameSessionScreenState extends State<GameSessionScreen> {
         wordEntry: wordEntry,
       ),
     );
-    _gameState = GameState.initial(_assignments);
+    _gameState = GameState.initial(
+      _assignments,
+      difficulty: widget.difficulty,
+      newWordEveryRound: widget.newWordEveryRound,
+      impostersKnowEachOther: widget.impostersKnowEachOther,
+    );
   }
 
   void _revealRole() {

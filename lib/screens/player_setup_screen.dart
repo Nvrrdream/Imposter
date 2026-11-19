@@ -1,6 +1,8 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../data/word_bank.dart';
+import '../models/word_entry.dart';
 import 'game_session_screen.dart';
 
 class PlayerSetupScreen extends StatefulWidget {
@@ -13,31 +15,43 @@ class PlayerSetupScreen extends StatefulWidget {
 class _PlayerSetupScreenState extends State<PlayerSetupScreen> {
   final List<TextEditingController> _players = [];
   int _imposterCount = 1;
+  bool _multiImposterMode = false;
   bool _impostersKnowEachOther = false;
+  bool _newWordEveryRound = false;
+  WordDifficulty _difficulty = WordDifficulty.medium;
   bool _isPreferenceLoaded = false;
-
 
   @override
   void initState() {
     super.initState();
 
-    _loadImposterPreference();
+    _loadPreferences();
 
     for (var i = 1; i <= 3; i++) {
       _players.add(TextEditingController(text: 'Player $i'));
     }
   }
-  Future<void> _loadImposterPreference() async {
+
+  Future<void> _loadPreferences() async {
     final preferences = await SharedPreferences.getInstance();
+
     if (!mounted) return;
 
     setState(() {
+      _multiImposterMode = preferences.getBool('multi_imposter_mode') ?? false;
       _impostersKnowEachOther =
           preferences.getBool('imposters_know_each_other') ?? false;
+      _newWordEveryRound =
+          preferences.getBool('new_word_every_round') ?? false;
       _isPreferenceLoaded = true;
-    });
-  }@override
 
+      if (!_multiImposterMode) {
+        _imposterCount = 1;
+      }
+    });
+  }
+
+  @override
   void dispose() {
     for (final player in _players) {
       player.dispose();
@@ -70,9 +84,7 @@ class _PlayerSetupScreenState extends State<PlayerSetupScreen> {
   }
 
   void _continue() {
-    final names = _players
-        .map((player) => player.text.trim())
-        .toList();
+    final names = _players.map((player) => player.text.trim()).toList();
 
     if (names.length < 3 || names.length > 12) {
       _showMessage('There must be between 3 and 12 players.');
@@ -91,7 +103,14 @@ class _PlayerSetupScreenState extends State<PlayerSetupScreen> {
       return;
     }
 
-    if (_imposterCount < 1 || _imposterCount >= names.length) {
+    if (!WordBank.hasWordsFor(_difficulty)) {
+      _showMessage('No such words exist. Please change difficulty.');
+      return;
+    }
+
+    final imposterCount = _multiImposterMode ? _imposterCount : 1;
+
+    if (imposterCount < 1 || imposterCount >= names.length) {
       _showMessage('Invalid imposter count.');
       return;
     }
@@ -100,18 +119,18 @@ class _PlayerSetupScreenState extends State<PlayerSetupScreen> {
       MaterialPageRoute(
         builder: (_) => GameSessionScreen(
           players: List<String>.unmodifiable(names),
-          imposterCount: _imposterCount,
+          imposterCount: imposterCount,
           impostersKnowEachOther: _impostersKnowEachOther,
+          newWordEveryRound: _multiImposterMode && _newWordEveryRound,
+          difficulty: _difficulty,
         ),
       ),
     );
   }
+
   void _showMessage(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        behavior: SnackBarBehavior.floating,
-      ),
+      SnackBar(content: Text(message), behavior: SnackBarBehavior.floating),
     );
   }
 
@@ -120,9 +139,7 @@ class _PlayerSetupScreenState extends State<PlayerSetupScreen> {
     final colors = Theme.of(context).colorScheme;
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Player Setup'),
-      ),
+      appBar: AppBar(title: const Text('Player Setup')),
       body: SafeArea(
         child: Column(
           children: [
@@ -133,10 +150,10 @@ class _PlayerSetupScreenState extends State<PlayerSetupScreen> {
                   Text(
                     'PLAYERS',
                     style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                          color: colors.secondary,
-                          letterSpacing: 1.5,
-                          fontWeight: FontWeight.bold,
-                        ),
+                      color: colors.secondary,
+                      letterSpacing: 1.5,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                   const SizedBox(height: 6),
                   Text(
@@ -166,7 +183,7 @@ class _PlayerSetupScreenState extends State<PlayerSetupScreen> {
                                 child: TextField(
                                   controller: _players[index],
                                   maxLength: 20,
-                                  decoration: InputDecoration(
+                                  decoration: const InputDecoration(
                                     hintText: 'Player name',
                                     border: InputBorder.none,
                                     counterText: '',
@@ -175,7 +192,9 @@ class _PlayerSetupScreenState extends State<PlayerSetupScreen> {
                               ),
                               IconButton(
                                 tooltip: 'Remove player',
-                                onPressed: _players.length > 3 && index == _players.length - 1
+                                onPressed:
+                                    _players.length > 3 &&
+                                        index == _players.length - 1
                                     ? () => _removePlayer(index)
                                     : null,
                                 icon: const Icon(Icons.close_rounded),
@@ -197,12 +216,60 @@ class _PlayerSetupScreenState extends State<PlayerSetupScreen> {
                   ),
                   const SizedBox(height: 28),
                   Text(
+                    'DIFFICULTY',
+                    style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                      color: colors.secondary,
+                      letterSpacing: 1.5,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    'Choose the word difficulty for this game.',
+                    style: Theme.of(context).textTheme.bodyMedium,
+                  ),
+                  const SizedBox(height: 12),
+                  Card(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 4,
+                      ),
+                      child: DropdownButtonFormField<WordDifficulty>(
+                        initialValue: _difficulty,
+                        decoration: const InputDecoration(
+                          border: InputBorder.none,
+                        ),
+                        items: const [
+                          DropdownMenuItem(
+                            value: WordDifficulty.easy,
+                            child: Text('Kunal Edition'),
+                          ),
+                          DropdownMenuItem(
+                            value: WordDifficulty.medium,
+                            child: Text('Medium'),
+                          ),
+                          DropdownMenuItem(
+                            value: WordDifficulty.hard,
+                            child: Text('Hard'),
+                          ),
+                        ],
+                        onChanged: (value) {
+                          if (value != null) {
+                            setState(() => _difficulty = value);
+                          }
+                        },
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 28),
+                  Text(
                     'IMPOSTERS',
                     style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                          color: colors.secondary,
-                          letterSpacing: 1.5,
-                          fontWeight: FontWeight.bold,
-                        ),
+                      color: colors.secondary,
+                      letterSpacing: 1.5,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                   const SizedBox(height: 6),
                   Text(
@@ -241,7 +308,9 @@ class _PlayerSetupScreenState extends State<PlayerSetupScreen> {
                             ),
                           ),
                           IconButton(
-                            onPressed: _imposterCount < _players.length - 1
+                            onPressed:
+                                _multiImposterMode &&
+                                    _imposterCount < _players.length - 1
                                 ? () {
                                     setState(() => _imposterCount++);
                                   }
@@ -254,7 +323,9 @@ class _PlayerSetupScreenState extends State<PlayerSetupScreen> {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    'At least one player must remain a normal player.',
+                    _multiImposterMode
+                        ? 'At least one player must remain a normal player.'
+                        : 'Multi-imposter mode is off. One imposter will be selected.',
                     style: Theme.of(context).textTheme.bodySmall,
                   ),
                 ],
