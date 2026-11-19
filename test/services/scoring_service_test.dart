@@ -35,11 +35,7 @@ void main() {
         state: state,
         votedPlayerName: 'Sam',
       ).state;
-      
-      state = GameStateService.processVote(
-        state: state,
-        votedPlayerName: 'Jordan',
-      ).state;
+     
 
       final points = ScoringService.calculatePoints(state: state);
 

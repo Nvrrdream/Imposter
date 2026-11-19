@@ -45,15 +45,12 @@ class GameStateService {
 
     final remainingImposters =
         remainingPlayers.where((player) => player.isImposter).length;
-
-    final initialImposterCount =
-        state.allAssignments.where((player) => player.isImposter).length;
         
     final GameStatus status;
 
     if (remainingImposters == 0) {
       status = GameStatus.innocentTeamWon;
-    } else if (wrongVotes >= initialImposterCount) {
+    } else if (wrongVotes >= remainingImposters) {
       status = GameStatus.impostersWon;
     } else {
       status = GameStatus.playing;
