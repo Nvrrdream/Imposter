@@ -1,6 +1,8 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../models/word_entry.dart';
+
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({
     required this.themeMode,
@@ -19,6 +21,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   bool _multiImposterMode = false;
   bool _impostersKnowEachOther = false;
   bool _newWordEveryRound = false;
+  WordDifficulty _difficulty = WordDifficulty.medium;
   bool _isPreferenceLoaded = false;
 
   @override
@@ -38,7 +41,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
           preferences.getBool('imposters_know_each_other') ?? false;
       _newWordEveryRound =
           preferences.getBool('new_word_every_round') ?? false;
-      _isPreferenceLoaded = true;
+      _difficulty = WordDifficulty.values.firstWhere(
+        (difficulty) => difficulty.name == preferences.getString('word_difficulty'),
+        orElse: () => WordDifficulty.medium,
+      );      _isPreferenceLoaded = true;
     });
   }
 
@@ -69,6 +75,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
     await preferences.setBool('new_word_every_round', value);
   }
 
+  Future<void> _setDifficulty(WordDifficulty value) async {
+    setState(() {
+      _difficulty = value;
+    });
+
+    final preferences = await SharedPreferences.getInstance();
+    await preferences.setString('word_difficulty', value.name);
+  }
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -117,6 +131,52 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ),
           const SizedBox(height: 28),
           Text('GAME', style: Theme.of(context).textTheme.labelLarge),
+          const SizedBox(height: 12),
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Word difficulty',
+                    style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    'Choose the word difficulty for new games.',
+                    style: Theme.of(context).textTheme.bodyMedium,
+                  ),
+                  const SizedBox(height: 12),
+                  DropdownButtonFormField<WordDifficulty>(
+                    initialValue: _difficulty,
+                    decoration: const InputDecoration(
+                      border: OutlineInputBorder(),
+                    ),
+                    items: const [
+                      DropdownMenuItem(
+                        value: WordDifficulty.easy,
+                        child: Text('Kunal Edition'),
+                      ),
+                      DropdownMenuItem(
+                        value: WordDifficulty.medium,
+                        child: Text('Niche'),
+                      ),
+                      DropdownMenuItem(
+                        value: WordDifficulty.hard,
+                        child: Text('EliteBall'),
+                      ),
+                    ],
+                    onChanged: _isPreferenceLoaded
+                        ? (value) {
+                            if (value != null) _setDifficulty(value);
+                          }
+                        : null,
+                  ),
+                ],
+              ),
+            ),
+          ),
           const SizedBox(height: 12),
           Card(
             child: Column(

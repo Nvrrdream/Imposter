@@ -43,7 +43,10 @@ class _PlayerSetupScreenState extends State<PlayerSetupScreen> {
           preferences.getBool('imposters_know_each_other') ?? false;
       _newWordEveryRound =
           preferences.getBool('new_word_every_round') ?? false;
-      _isPreferenceLoaded = true;
+      _difficulty = WordDifficulty.values.firstWhere(
+        (difficulty) => difficulty.name == preferences.getString('word_difficulty'),
+        orElse: () => WordDifficulty.medium,
+      );      _isPreferenceLoaded = true;
 
       if (!_multiImposterMode) {
         _imposterCount = 1;
@@ -212,54 +215,6 @@ class _PlayerSetupScreenState extends State<PlayerSetupScreen> {
                       _players.length < 12
                           ? 'Add player'
                           : 'Maximum players reached',
-                    ),
-                  ),
-                  const SizedBox(height: 28),
-                  Text(
-                    'DIFFICULTY',
-                    style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                      color: colors.secondary,
-                      letterSpacing: 1.5,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    'Choose the word difficulty for this game.',
-                    style: Theme.of(context).textTheme.bodyMedium,
-                  ),
-                  const SizedBox(height: 12),
-                  Card(
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 4,
-                      ),
-                      child: DropdownButtonFormField<WordDifficulty>(
-                        initialValue: _difficulty,
-                        decoration: const InputDecoration(
-                          border: InputBorder.none,
-                        ),
-                        items: const [
-                          DropdownMenuItem(
-                            value: WordDifficulty.easy,
-                            child: Text('Kunal Edition'),
-                          ),
-                          DropdownMenuItem(
-                            value: WordDifficulty.medium,
-                            child: Text('Medium'),
-                          ),
-                          DropdownMenuItem(
-                            value: WordDifficulty.hard,
-                            child: Text('Hard'),
-                          ),
-                        ],
-                        onChanged: (value) {
-                          if (value != null) {
-                            setState(() => _difficulty = value);
-                          }
-                        },
-                      ),
                     ),
                   ),
                   const SizedBox(height: 28),
