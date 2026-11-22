@@ -22,6 +22,10 @@ flutter:
       fonts:
         - asset: assets/fonts/Rajdhani-Bold.ttf
           weight: 700
+    - family: RubikGemstones
+      fonts:
+        - asset: assets/fonts/RubikGemstones-Regular.ttf
+          weight: 400
   uses-material-design: true
   assets:
-    - assets/images/imposter_title_screen.png
+    - assets/images/imposter_home_bg.png
