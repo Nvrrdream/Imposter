@@ -97,6 +97,71 @@ void main() {
         second.map((player) => player.isImposter).toList(),
       );
     });
+    
+    test('excludes players selected in both previous games', () {
+      final assignments = RoleAssignmentService.assign(
+        players: players,
+        imposterCount: 2,
+        wordEntry: wordEntry,
+        recentImposterHistory: [
+          {'Player 1', 'Player 2'},
+          {'Player 1', 'Player 3'},
+        ],
+        random: Random(42),
+      );
+
+      final imposters = assignments
+          .where((player) => player.isImposter)
+          .map((player) => player.playerName)
+          .toSet();
+
+      expect(imposters, isNot(contains('Player 1')));
+      expect(imposters.length, 2);
+    });
+
+    test('allows players selected in only one previous game', () {
+      var playerOneSelected = false;
+
+      for (var seed = 0; seed < 100; seed++) {
+        final assignments = RoleAssignmentService.assign(
+          players: players,
+          imposterCount: 1,
+          wordEntry: wordEntry,
+          recentImposterHistory: [
+            {'Player 1'},
+            {'Player 2'},
+          ],
+          random: Random(seed),
+        );
+
+        if (assignments.any(
+          (player) => player.playerName == 'Player 1' && player.isImposter,
+        )) {
+          playerOneSelected = true;
+          break;
+        }
+      }
+
+      expect(playerOneSelected, isTrue);
+    });
+
+    test('relaxes the restriction when too few eligible players remain', () {
+      final assignments = RoleAssignmentService.assign(
+        players: players,
+        imposterCount: 4,
+        wordEntry: wordEntry,
+        recentImposterHistory: [
+          {'Player 1', 'Player 2', 'Player 3', 'Player 4'},
+          {'Player 1', 'Player 2', 'Player 3', 'Player 4'},
+        ],
+        random: Random(42),
+      );
+
+      expect(
+        assignments.where((player) => player.isImposter).length,
+        4,
+      );
+    });
 
     test('rejects invalid imposter counts', () {
       expect(

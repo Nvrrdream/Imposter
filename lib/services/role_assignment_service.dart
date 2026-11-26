@@ -9,6 +9,7 @@ class RoleAssignmentService {
     required int imposterCount,
     required WordEntry wordEntry,
     Random? random,
+    List<Set<String>> recentImposterHistory = const [],
   }) {
     if (players.length < 3 || players.length > 12) {
       throw ArgumentError('There must be between 3 and 12 players.');
@@ -31,12 +32,39 @@ class RoleAssignmentService {
     }
 
     final source = random ?? Random();
-    final imposterIndexes = List<int>.generate(
+
+    final recentGames = recentImposterHistory.take(2).toList();
+
+    final repeatedlySelectedImposters = recentGames.length == 2
+        ? recentGames[0]
+            .map((name) => name.trim().toLowerCase())
+            .toSet()
+            .intersection(
+              recentGames[1]
+                  .map((name) => name.trim().toLowerCase())
+                  .toSet(),
+            )
+        : <String>{};
+
+    var eligibleIndexes = List<int>.generate(
       players.length,
       (index) => index,
-    )..shuffle(source);
+    ).where(
+      (index) => !repeatedlySelectedImposters.contains(
+        players[index].trim().toLowerCase(),
+      ),
+    ).toList();
 
-    final selectedImposters = imposterIndexes
+    if (eligibleIndexes.length < imposterCount) {
+      eligibleIndexes = List<int>.generate(
+        players.length,
+        (index) => index,
+      );
+    }
+
+    eligibleIndexes.shuffle(source);
+
+    final selectedImposters = eligibleIndexes
         .take(imposterCount)
         .toSet();
 
