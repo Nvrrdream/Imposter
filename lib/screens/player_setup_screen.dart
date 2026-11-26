@@ -3,6 +3,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../data/word_bank.dart';
 import '../models/word_entry.dart';
+import '../services/game_session_controller.dart';
 import 'game_session_screen.dart';
 
 class PlayerSetupScreen extends StatefulWidget {
@@ -44,9 +45,11 @@ class _PlayerSetupScreenState extends State<PlayerSetupScreen> {
       _newWordEveryRound =
           preferences.getBool('new_word_every_round') ?? false;
       _difficulty = WordDifficulty.values.firstWhere(
-        (difficulty) => difficulty.name == preferences.getString('word_difficulty'),
+        (difficulty) =>
+            difficulty.name == preferences.getString('word_difficulty'),
         orElse: () => WordDifficulty.medium,
-      );      _isPreferenceLoaded = true;
+      );
+      _isPreferenceLoaded = true;
 
       if (!_multiImposterMode) {
         _imposterCount = 1;
@@ -118,14 +121,21 @@ class _PlayerSetupScreenState extends State<PlayerSetupScreen> {
       return;
     }
 
+    final sessionController = GameSessionController(
+      players: names,
+      imposterCount: imposterCount,
+      impostersKnowEachOther: _impostersKnowEachOther,
+      newWordEveryRound: _multiImposterMode && _newWordEveryRound,
+      difficulty: _difficulty,
+    );
+
+    final gameState = sessionController.startNextGame();
+
     Navigator.of(context).push(
       MaterialPageRoute(
         builder: (_) => GameSessionScreen(
-          players: List<String>.unmodifiable(names),
-          imposterCount: imposterCount,
-          impostersKnowEachOther: _impostersKnowEachOther,
-          newWordEveryRound: _multiImposterMode && _newWordEveryRound,
-          difficulty: _difficulty,
+          sessionController: sessionController,
+          gameState: gameState,
         ),
       ),
     );
@@ -153,10 +163,10 @@ class _PlayerSetupScreenState extends State<PlayerSetupScreen> {
                   Text(
                     'PLAYERS',
                     style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                      color: colors.secondary,
-                      letterSpacing: 1.5,
-                      fontWeight: FontWeight.bold,
-                    ),
+                          color: colors.secondary,
+                          letterSpacing: 1.5,
+                          fontWeight: FontWeight.bold,
+                        ),
                   ),
                   const SizedBox(height: 6),
                   Text(
@@ -195,8 +205,7 @@ class _PlayerSetupScreenState extends State<PlayerSetupScreen> {
                               ),
                               IconButton(
                                 tooltip: 'Remove player',
-                                onPressed:
-                                    _players.length > 3 &&
+                                onPressed: _players.length > 3 &&
                                         index == _players.length - 1
                                     ? () => _removePlayer(index)
                                     : null,
@@ -221,10 +230,10 @@ class _PlayerSetupScreenState extends State<PlayerSetupScreen> {
                   Text(
                     'IMPOSTERS',
                     style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                      color: colors.secondary,
-                      letterSpacing: 1.5,
-                      fontWeight: FontWeight.bold,
-                    ),
+                          color: colors.secondary,
+                          letterSpacing: 1.5,
+                          fontWeight: FontWeight.bold,
+                        ),
                   ),
                   const SizedBox(height: 6),
                   Text(
@@ -263,8 +272,7 @@ class _PlayerSetupScreenState extends State<PlayerSetupScreen> {
                             ),
                           ),
                           IconButton(
-                            onPressed:
-                                _multiImposterMode &&
+                            onPressed: _multiImposterMode &&
                                     _imposterCount < _players.length - 1
                                 ? () {
                                     setState(() => _imposterCount++);

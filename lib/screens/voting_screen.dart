@@ -1,17 +1,20 @@
-
 import 'package:material_ui/material_ui.dart';
+import 'round_back_scope.dart';
 
 import '../models/game_state.dart';
+import '../services/game_session_controller.dart';
 import '../services/game_state_service.dart';
 import 'vote_reveal_screen.dart';
 
 class VotingScreen extends StatefulWidget {
   const VotingScreen({
     required this.gameState,
+    required this.sessionController,
     super.key,
   });
 
   final GameState gameState;
+  final GameSessionController sessionController;
 
   @override
   State<VotingScreen> createState() => _VotingScreenState();
@@ -32,6 +35,7 @@ class _VotingScreenState extends State<VotingScreen> {
       MaterialPageRoute(
         builder: (_) => VoteRevealScreen(
           voteResult: result,
+          sessionController: widget.sessionController,
         ),
       ),
     );
@@ -42,7 +46,8 @@ class _VotingScreenState extends State<VotingScreen> {
     final colors = Theme.of(context).colorScheme;
     final players = widget.gameState.activeAssignments;
 
-    return Scaffold(
+    return RoundBackScope(
+      child: Scaffold(
       appBar: AppBar(
         title: const Text('Vote'),
         automaticallyImplyLeading: false,
@@ -109,6 +114,7 @@ class _VotingScreenState extends State<VotingScreen> {
           ),
         ),
       ),
+    ),
     );
   }
 }

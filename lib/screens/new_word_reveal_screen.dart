@@ -1,17 +1,21 @@
 import 'package:material_ui/material_ui.dart';
+import 'round_back_scope.dart';
 
 import '../data/word_bank.dart';
 import '../models/game_state.dart';
 import '../models/player_assignment.dart';
+import '../services/game_session_controller.dart';
 import 'discussion_screen.dart';
 
 class NewWordRevealScreen extends StatefulWidget {
   const NewWordRevealScreen({
     required this.gameState,
+    required this.sessionController,
     super.key,
   });
 
   final GameState gameState;
+  final GameSessionController sessionController;
 
   @override
   State<NewWordRevealScreen> createState() => _NewWordRevealScreenState();
@@ -104,7 +108,10 @@ class _NewWordRevealScreenState extends State<NewWordRevealScreen> {
     final colors = Theme.of(context).colorScheme;
 
     if (_currentPlayerIndex >= _assignments.length) {
-      return DiscussionScreen(gameState: _updatedGameState);
+      return DiscussionScreen(
+        gameState: _updatedGameState,
+        sessionController: widget.sessionController,
+      );
     }
 
     final assignment = _assignments[_currentPlayerIndex];
@@ -121,7 +128,8 @@ class _NewWordRevealScreenState extends State<NewWordRevealScreen> {
                 .toList(growable: false)
             : const <String>[];
 
-    return Scaffold(
+    return RoundBackScope(
+      child: Scaffold(
       appBar: AppBar(
         title: const Text('New Round'),
         automaticallyImplyLeading: false,
@@ -321,6 +329,7 @@ class _NewWordRevealScreenState extends State<NewWordRevealScreen> {
           ),
         ),
       ),
+    ),
     );
   }
 }

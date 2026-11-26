@@ -1,27 +1,20 @@
-import '../models/word_entry.dart';
 import 'package:material_ui/material_ui.dart';
+import 'round_back_scope.dart';
 
 import '../models/game_state.dart';
-import 'discussion_screen.dart';
-import '../data/word_bank.dart';
 import '../models/player_assignment.dart';
-import '../services/role_assignment_service.dart';
+import '../services/game_session_controller.dart';
+import 'discussion_screen.dart';
 
 class GameSessionScreen extends StatefulWidget {
   const GameSessionScreen({
-    required this.players,
-    required this.imposterCount,
-    required this.impostersKnowEachOther,
-    required this.newWordEveryRound,
-    required this.difficulty,
+    required this.sessionController,
+    required this.gameState,
     super.key,
   });
 
-  final List<String> players;
-  final int imposterCount;
-  final bool impostersKnowEachOther;
-  final bool newWordEveryRound;
-  final WordDifficulty difficulty;
+  final GameSessionController sessionController;
+  final GameState gameState;
 
   @override
   State<GameSessionScreen> createState() => _GameSessionScreenState();
@@ -37,20 +30,8 @@ class _GameSessionScreenState extends State<GameSessionScreen> {
   @override
   void initState() {
     super.initState();
-    final wordEntry = WordBank.pickRandom(difficulty: widget.difficulty);
-    _assignments = List.unmodifiable(
-      RoleAssignmentService.assign(
-        players: widget.players,
-        imposterCount: widget.imposterCount,
-        wordEntry: wordEntry,
-      ),
-    );
-    _gameState = GameState.initial(
-      _assignments,
-      difficulty: widget.difficulty,
-      newWordEveryRound: widget.newWordEveryRound,
-      impostersKnowEachOther: widget.impostersKnowEachOther,
-    );
+    _gameState = widget.gameState;
+    _assignments = _gameState.allAssignments;
   }
 
   void _revealRole() {
@@ -84,23 +65,28 @@ class _GameSessionScreenState extends State<GameSessionScreen> {
     final isFinished = _currentPlayerIndex >= _assignments.length;
 
     if (isFinished) {
-  return DiscussionScreen(
-    gameState: _gameState,
-  );
-}
+      return DiscussionScreen(
+        gameState: _gameState,
+        sessionController: widget.sessionController,
+      );
+    }
 
     final assignment = _assignments[_currentPlayerIndex];
 
     final fellowImposterNames =
-      widget.impostersKnowEachOther && assignment.isImposter
-          ? _assignments
-              .where((player) =>
-                  player.isImposter && player.playerName != assignment.playerName)
-              .map((player) => player.playerName)
-              .toList(growable: false)
-          : const <String>[];
+        _gameState.impostersKnowEachOther && assignment.isImposter
+            ? _assignments
+                .where(
+                  (player) =>
+                      player.isImposter &&
+                      player.playerName != assignment.playerName,
+                )
+                .map((player) => player.playerName)
+                .toList(growable: false)
+            : const <String>[];
 
-    return Scaffold(
+    return RoundBackScope(
+      child: Scaffold(
       appBar: AppBar(
         title: const Text('Private Role'),
         automaticallyImplyLeading: false,
@@ -140,129 +126,146 @@ class _GameSessionScreenState extends State<GameSessionScreen> {
                           scale: _isRevealed ? 1.015 : 1,
                           duration: const Duration(milliseconds: 180),
                           curve: Curves.easeOut,
-
-child: Card(
-  child: ConstrainedBox(
-    constraints: const BoxConstraints(
-      minHeight: 300,
-    ),
-    child: Padding(
-      padding: const EdgeInsets.all(24),
-      child: Column(
-        children: [
-          Expanded(
-            child: Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  if (!_isRevealed) ...[
-                    const Icon(
-                      Icons.lock_rounded,
-                      size: 56,
-                    ),
-                    const SizedBox(height: 24),
-                    Text(
-                      assignment.playerName,
-                      textAlign: TextAlign.center,
-                      style: Theme.of(context)
-                          .textTheme
-                          .headlineMedium
-                          ?.copyWith(
-                            fontSize: 30,
-                            color: colors.primary,
-                            fontWeight: FontWeight.bold,
+                          child: Card(
+                            child: ConstrainedBox(
+                              constraints: const BoxConstraints(
+                                minHeight: 300,
+                              ),
+                              child: Padding(
+                                padding: const EdgeInsets.all(24),
+                                child: Column(
+                                  children: [
+                                    Expanded(
+                                      child: Center(
+                                        child: Column(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.center,
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            if (!_isRevealed) ...[
+                                              const Icon(
+                                                Icons.lock_rounded,
+                                                size: 56,
+                                              ),
+                                              const SizedBox(height: 24),
+                                              Text(
+                                                assignment.playerName,
+                                                textAlign: TextAlign.center,
+                                                style: Theme.of(context)
+                                                    .textTheme
+                                                    .headlineMedium
+                                                    ?.copyWith(
+                                                      fontSize: 30,
+                                                      color: colors.primary,
+                                                      fontWeight:
+                                                          FontWeight.bold,
+                                                    ),
+                                              ),
+                                              const SizedBox(height: 16),
+                                              Text(
+                                                'Press and hold to reveal your role',
+                                                textAlign: TextAlign.center,
+                                                style: Theme.of(context)
+                                                    .textTheme
+                                                    .bodyLarge,
+                                              ),
+                                            ] else ...[
+                                              Icon(
+                                                assignment.isImposter
+                                                    ? Icons.visibility_rounded
+                                                    : Icons.check_circle_rounded,
+                                                size: 56,
+                                                color: colors.primary,
+                                              ),
+                                              const SizedBox(height: 24),
+                                              Text(
+                                                assignment.isImposter
+                                                    ? 'YOU ARE AN IMPOSTER'
+                                                    : 'YOUR SECRET WORD',
+                                                textAlign: TextAlign.center,
+                                                style: Theme.of(context)
+                                                    .textTheme
+                                                    .titleLarge
+                                                    ?.copyWith(
+                                                      fontWeight:
+                                                          FontWeight.bold,
+                                                      letterSpacing: 1.1,
+                                                    ),
+                                              ),
+                                              const SizedBox(height: 24),
+                                              Text(
+                                                assignment.isImposter
+                                                    ? assignment.category!
+                                                    : assignment.secretWord!,
+                                                textAlign: TextAlign.center,
+                                                style: Theme.of(context)
+                                                    .textTheme
+                                                    .headlineMedium
+                                                    ?.copyWith(
+                                                      color: colors.primary,
+                                                      fontWeight:
+                                                          FontWeight.bold,
+                                                    ),
+                                              ),
+                                              if (assignment.isImposter) ...[
+                                                const SizedBox(height: 16),
+                                                Text(
+                                                  'Hint: ${assignment.hint!}',
+                                                  textAlign: TextAlign.center,
+                                                  style: Theme.of(context)
+                                                      .textTheme
+                                                      .bodyLarge,
+                                                ),
+                                              ],
+                                              const SizedBox(height: 24),
+                                              if (fellowImposterNames
+                                                  .isNotEmpty) ...[
+                                                const SizedBox(height: 16),
+                                                Text(
+                                                  'YOUR PARTNERS',
+                                                  textAlign: TextAlign.center,
+                                                  style: Theme.of(context)
+                                                      .textTheme
+                                                      .labelLarge
+                                                      ?.copyWith(
+                                                        color: colors
+                                                            .onSurfaceVariant,
+                                                        fontWeight:
+                                                            FontWeight.bold,
+                                                        letterSpacing: 1.2,
+                                                      ),
+                                                ),
+                                                const SizedBox(height: 6),
+                                                Text(
+                                                  fellowImposterNames.join(', '),
+                                                  textAlign: TextAlign.center,
+                                                  style: Theme.of(context)
+                                                      .textTheme
+                                                      .titleLarge
+                                                      ?.copyWith(
+                                                        color: colors.primary,
+                                                        fontWeight:
+                                                            FontWeight.bold,
+                                                      ),
+                                                ),
+                                              ],
+                                            ],
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                    if (_isRevealed) ...[
+                                      const SizedBox(height: 16),
+                                      const Text(
+                                        'Release to hide your word',
+                                        textAlign: TextAlign.center,
+                                      ),
+                                    ],
+                                  ],
+                                ),
+                              ),
+                            ),
                           ),
-                    ),
-                    const SizedBox(height: 16),
-                    Text(
-                      'Press and hold to reveal your role',
-                      textAlign: TextAlign.center,
-                      style: Theme.of(context).textTheme.bodyLarge,
-                    ),
-                  ] else ...[
-                    Icon(
-                      assignment.isImposter
-                          ? Icons.visibility_rounded
-                          : Icons.check_circle_rounded,
-                      size: 56,
-                      color: colors.primary,
-                    ),
-                    const SizedBox(height: 24),
-                    Text(
-                      assignment.isImposter
-                          ? 'YOU ARE AN IMPOSTER'
-                          : 'YOUR SECRET WORD',
-                      textAlign: TextAlign.center,
-                      style: Theme.of(context)
-                          .textTheme
-                          .titleLarge
-                          ?.copyWith(
-                            fontWeight: FontWeight.bold,
-                            letterSpacing: 1.1,
-                          ),
-                    ),
-                    const SizedBox(height: 24),
-                    Text(
-                      assignment.isImposter
-                          ? assignment.category!
-                          : assignment.secretWord!,
-                      textAlign: TextAlign.center,
-                      style: Theme.of(context)
-                          .textTheme
-                          .headlineMedium
-                          ?.copyWith(
-                            color: colors.primary,
-                            fontWeight: FontWeight.bold,
-                          ),
-                    ),
-                    if (assignment.isImposter) ...[
-                      const SizedBox(height: 16),
-                      Text(
-                        'Hint: ${assignment.hint!}',
-                        textAlign: TextAlign.center,
-                        style: Theme.of(context).textTheme.bodyLarge,
-                      ),
-                    ],
-                    const SizedBox(height: 24),
-                    if (fellowImposterNames.isNotEmpty) ...[
-                      const SizedBox(height: 16),
-                      Text(
-                        'YOUR PARTNERS',
-                        textAlign: TextAlign.center,
-                        style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                          color: colors.onSurfaceVariant,
-                          fontWeight: FontWeight.bold,
-                          letterSpacing: 1.2,
-                        ),
-                      ),
-                      const SizedBox(height: 6),
-                      Text(
-                        fellowImposterNames.join(', '),
-                        textAlign: TextAlign.center,
-                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                          color: colors.primary,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ],
-                  ],
-                ],
-              ),
-            ),
-          ),
-          if (_isRevealed) ...[
-            const SizedBox(height: 16),
-            const Text(
-              'Release to hide your word',
-              textAlign: TextAlign.center,
-            ),
-          ],
-        ],
-      ),
-    ),
-  ),
-),
                         ),
                       ),
                     ),
@@ -284,6 +287,7 @@ child: Card(
           ),
         ),
       ),
+    ),
     );
   }
 }

@@ -1,22 +1,26 @@
-
 import 'package:material_ui/material_ui.dart';
+import 'round_back_scope.dart';
 
 import '../models/game_state.dart';
+import '../services/game_session_controller.dart';
 import 'voting_screen.dart';
 
 class DiscussionScreen extends StatelessWidget {
   const DiscussionScreen({
     required this.gameState,
+    required this.sessionController,
     super.key,
   });
 
   final GameState gameState;
+  final GameSessionController sessionController;
 
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
 
-    return Scaffold(
+    return RoundBackScope(
+      child: Scaffold(
       appBar: AppBar(
         title: const Text('Discussion'),
         automaticallyImplyLeading: false,
@@ -61,6 +65,7 @@ class DiscussionScreen extends StatelessWidget {
                     MaterialPageRoute(
                       builder: (_) => VotingScreen(
                         gameState: gameState,
+                        sessionController: sessionController,
                       ),
                     ),
                   );
@@ -74,6 +79,7 @@ class DiscussionScreen extends StatelessWidget {
           ),
         ),
       ),
+    ),
     );
   }
 }

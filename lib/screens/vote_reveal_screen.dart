@@ -1,16 +1,21 @@
 import 'package:material_ui/material_ui.dart';
+import 'round_back_scope.dart';
 
-import 'game_results_screen.dart';
+import '../services/game_session_controller.dart';
 import '../services/game_state_service.dart';
 import 'discussion_screen.dart';
+import 'game_results_screen.dart';
 import 'new_word_reveal_screen.dart';
+
 class VoteRevealScreen extends StatelessWidget {
   const VoteRevealScreen({
     required this.voteResult,
+    required this.sessionController,
     super.key,
   });
 
   final VoteResult voteResult;
+  final GameSessionController sessionController;
 
   @override
   Widget build(BuildContext context) {
@@ -31,7 +36,8 @@ class VoteRevealScreen extends StatelessWidget {
         ? '${eliminatedPlayer.playerName} was an imposter!'
         : '${eliminatedPlayer.playerName} was innocent.';
 
-    return Scaffold(
+    return RoundBackScope(
+      child: Scaffold(
       appBar: AppBar(
         title: const Text('Vote Result'),
         automaticallyImplyLeading: false,
@@ -80,13 +86,20 @@ class VoteRevealScreen extends StatelessWidget {
                       MaterialPageRoute(
                         builder: (_) => GameResultsScreen(
                           gameState: state,
+                          sessionController: sessionController,
                         ),
                       ),
                     );
                   } else {
                     final Widget nextScreen = state.newWordEveryRound
-                        ? NewWordRevealScreen(gameState: state)
-                        : DiscussionScreen(gameState: state);
+                        ? NewWordRevealScreen(
+                            gameState: state,
+                            sessionController: sessionController,
+                          )
+                        : DiscussionScreen(
+                            gameState: state,
+                            sessionController: sessionController,
+                          );
 
                     Navigator.of(context).pushAndRemoveUntil(
                       MaterialPageRoute(
@@ -107,6 +120,7 @@ class VoteRevealScreen extends StatelessWidget {
           ),
         ),
       ),
+    ),
     );
   }
 }
