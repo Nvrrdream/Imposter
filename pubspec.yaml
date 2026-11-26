@@ -1,8 +1,7 @@
-name: imposter
+﻿name: imposter
 description: "A new Flutter project."
 publish_to: 'none'
-version: 0.1.0+3
-
+version: 0.1.1+4
 environment:
   sdk: ^3.14.0
 
@@ -37,6 +36,7 @@ flutter:
     - assets/images/imposter_home_bg.png
     - assets/images/characters/hooded_innocent.webp
     - assets/images/characters/hooded_imposter.webp
+    - assets/images/vote_results/
 
 flutter_launcher_icons:
   android: true
