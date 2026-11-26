@@ -1,7 +1,21 @@
 import 'package:material_ui/material_ui.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 
-class AboutScreen extends StatelessWidget {
+class AboutScreen extends StatefulWidget {
   const AboutScreen({super.key});
+
+  @override
+  State<AboutScreen> createState() => _AboutScreenState();
+}
+
+class _AboutScreenState extends State<AboutScreen> {
+  late final Future<PackageInfo> _packageInfo;
+
+  @override
+  void initState() {
+    super.initState();
+    _packageInfo = PackageInfo.fromPlatform();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -74,11 +88,18 @@ class AboutScreen extends StatelessWidget {
                         ),
                   ),
                   const SizedBox(height: 14),
-                  const Row(
+                  Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text('Version'),
-                      Text('1.0.0'),
+                      const Text('Version'),
+                      FutureBuilder<PackageInfo>(
+                        future: _packageInfo,
+                        builder: (context, snapshot) {
+                          return Text(
+                            snapshot.data?.version ?? 'Loading...',
+                          );
+                        },
+                      ),
                     ],
                   ),
                   const SizedBox(height: 12),
