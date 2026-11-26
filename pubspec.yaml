@@ -35,6 +35,8 @@ flutter:
   uses-material-design: true
   assets:
     - assets/images/imposter_home_bg.png
+    - assets/images/characters/hooded_innocent.webp
+    - assets/images/characters/hooded_imposter.webp
 
 flutter_launcher_icons:
   android: true
